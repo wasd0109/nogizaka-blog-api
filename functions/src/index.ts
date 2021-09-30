@@ -1,20 +1,20 @@
 import * as functions from "firebase-functions";
 import * as express from "express";
-import { getMemberList } from "./scrape";
-import * as admin from "firebase-admin";
+import { scrapeMemberList } from "./scraping/members";
+import { db } from "./utils/fbInit";
+import { scrapeAllMemberBlogs } from "./scraping/blogs";
 
 const app = express();
-export const db = admin.initializeApp().firestore();
+
 // Start writing Firebase Functions
 // https://firebase.google.com/docs/functions/typescript
 
-app.get("/refreshMembers", async (req, res) => {
+app.post("/refreshMembers", async (req, res) => {
   try {
-    await getMemberList();
-    return res.status(200).send("OK");
+    const result = await scrapeMemberList();
+    return res.status(200).send(result);
   } catch (err) {
-    console.log(err);
-    return res.status(500).send("Error");
+    return res.status(500).send(err);
   }
 });
 
@@ -27,5 +27,7 @@ app.get("/members", async (req, res) => {
     res.status(500).send(err);
   }
 });
+
+app.post("/refreshBlogs", scrapeAllMemberBlogs);
 
 exports.api = functions.https.onRequest(app);
