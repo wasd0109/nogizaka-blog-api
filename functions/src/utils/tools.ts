@@ -16,5 +16,16 @@ export const isArrayEqual = (x: any[], y: any[]): boolean =>
 
 // eslint-disable-next-line
 export const findArrayDifference = (x: any[], y: any[]) => {
-  return _.toArray(_(x).differenceWith(y, _.isEqual));
+  // eslint-disable-next-line
+  return _.toArray(_(x).differenceWith(y, _.isEqual)) as any[];
+};
+// eslint-disable-next-line
+export const paginateArray = (
+    // eslint-disable-next-line
+  array: any[],
+    pageSize: number,
+    pageNumber: number
+    // eslint-disable-next-line
+): any[] => {
+  return array.slice((pageNumber - 1) * pageSize, pageNumber * pageSize);
 };

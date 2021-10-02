@@ -6,20 +6,20 @@ import axios from "axios";
 import { Blog } from "../models/Blogs";
 import { NodeHtmlMarkdown } from "node-html-markdown";
 import * as getUuid from "uuid-by-string";
-import { findArrayDifference, isArrayEqual } from "../utils/tools";
+import { findArrayDifference } from "../utils/tools";
 
 type ScrapeMemberBlogsResult = Promise<{
   updated: boolean;
   result: FirebaseFirestore.WriteResult[] | [];
 }>;
 export const scrapeMemberBlogs = async (
-  id: string
+    href: string
 ): ScrapeMemberBlogsResult => {
   const mbList: MemberInfo[] = await (
     await db.collection("members").get()
   ).docs.map((doc) => doc.data() as MemberInfo);
 
-  const mb = mbList.filter((mb) => mb.id === id)[0];
+  const mb = mbList.filter((mb) => mb.href == href)[0];
   if (mb) {
     return await scrapeBlogs(mb);
   } else throw Error("Invalid ID");
@@ -27,21 +27,33 @@ export const scrapeMemberBlogs = async (
 
 const scrapeBlogs = async (mb: MemberInfo): ScrapeMemberBlogsResult => {
   const monthList = await getMonthUrl(mb);
-  const blogUrls = await getAllBlogUrl(monthList);
-  console.log(blogUrls.length);
-  const blogs = await getAllBlogs(blogUrls.flat());
-  const dbBlogsRef = await db
-    .collection("blogs")
-    .where("author", "==", mb.name)
-    .get();
-  const dbBlogs = dbBlogsRef.docs.map((doc) => {
-    const blog = doc.data();
-    return { ...blog, timestamp: blog.timestamp.toDate() } as Blog;
-  });
+  const blogUrls = await (await getAllBlogUrl(monthList)).flat();
+  const urlRef = await db.collection("urls").doc(mb.id);
+  const urlDoc = await urlRef.get();
+  const dbUrls = urlDoc.data()?.value || [];
+  const diff = findArrayDifference(blogUrls, dbUrls) as string[];
 
-  const diff = findArrayDifference(blogs, dbBlogs);
-  console.log(diff);
-  if (diff.length) {
+  // const diff = findArrayDifference(blogs, dbBlogs);
+  const diffLength = diff.length;
+  if (diffLength) {
+    let blogs;
+    if (diffLength > 300) {
+      const half = Math.ceil(diffLength / 2);
+      const firstHalf = diff.slice(0, half);
+      const secondHalf = diff.slice(-half);
+      const firstHalfBlog = await getAllBlogs(firstHalf);
+      const secondHalfBlog = await getAllBlogs(secondHalf);
+      await urlRef.set({ value: blogUrls });
+      blogs = [...firstHalfBlog, ...secondHalfBlog];
+    } else blogs = await getAllBlogs(diff);
+    // const dbBlogsRef = await db
+    //   .collection("blogs")
+    //   .where("author", "==", mb.name)
+    //   .get();
+    // const dbBlogs = dbBlogsRef.docs.map((doc) => {
+    //   const blog = doc.data();
+    //   return { ...blog, timestamp: blog.timestamp.toDate() } as Blog;
+    // });
     const result = await saveBlogs(blogs);
     return { updated: true, result };
   } else return { updated: false, result: [] };

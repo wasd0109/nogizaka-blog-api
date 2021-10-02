@@ -19,7 +19,7 @@ export const scrapeMemberList = async (): Promise<string> => {
     const element = $(el);
     const name =
       $($(".kanji")[i]).text().replace(" ", "") ||
-      element.text().replace(">>", "");
+      element.text().replace(">>", "").replace("ブログ", "");
     const href = element.attr("href")?.replace("./", "") || "";
     const member: MemberInfo = {
       name,
@@ -37,7 +37,6 @@ export const scrapeMemberList = async (): Promise<string> => {
     mbList.forEach(async (mb) => {
       await db.collection("members").doc(mb.id).set(mb);
     });
-    await db.collection("caches").doc("members").set({ value: cache });
     return "Refreshed";
   }
 };
