@@ -2,7 +2,7 @@ import * as functions from "firebase-functions";
 import * as express from "express";
 import { scrapeMemberList } from "./scraping/members";
 import { db } from "./utils/fbInit";
-import { scrapeAllMemberBlogs } from "./scraping/blogs";
+import { scrapeMemberBlogs } from "./scraping/blogs";
 
 const app = express();
 
@@ -28,6 +28,17 @@ app.get("/members", async (req, res) => {
   }
 });
 
-app.post("/refreshBlogs", scrapeAllMemberBlogs);
+app.post("/refreshBlogs", async (req, res) => {
+  const id = req.query["member"] as string;
+  if (!id) res.status(400).send("ID must not be empty");
+  try {
+    const result = await scrapeMemberBlogs(id);
+    res.status(200).send(result);
+  } catch (err) {
+    res.status(400).send(err);
+  }
+});
 
-exports.api = functions.https.onRequest(app);
+exports.api = functions
+  .runWith({ timeoutSeconds: 300, memory: "2GB" })
+  .https.onRequest(app);

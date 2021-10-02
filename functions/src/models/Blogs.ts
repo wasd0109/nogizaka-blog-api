@@ -3,4 +3,5 @@ export type Blog = {
   author: string;
   content: string;
   timestamp: Date;
+  id: string;
 };
