@@ -6,7 +6,7 @@
     "serve": "npm run build && firebase emulators:start --only functions",
     "shell": "npm run build && firebase functions:shell",
     "start": "npm run shell",
-    "deploy": "firebase deploy --only functions",
+    "deploy": "eslint --ext .js,.ts . --fix && firebase deploy --only functions",
     "logs": "firebase functions:log"
   },
   "engines": {
@@ -21,6 +21,7 @@
     "firebase-functions": "^3.14.1",
     "lodash": "^4.17.21",
     "node-html-markdown": "^1.1.2",
+    "query-string": "^7.0.1",
     "uuid-by-string": "^3.0.4"
   },
   "devDependencies": {
