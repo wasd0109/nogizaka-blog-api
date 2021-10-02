@@ -55,25 +55,27 @@ app.get("/blogs", async (req, res) => {
   const page = (req.query["page"] as string) || "1";
   const itemCount = (req.query["count"] as string) || "20";
   const previewLength = (req.query["previewLength"] as string) || "300";
+  const pageNumber = parseInt(page);
+  const pageSize = parseInt(itemCount);
+
   if (href) {
     const mb = (await (
       await db.collection("members").where("href", "==", href).get()
     ).docs[0].data()) as MemberInfo;
-    console.log(mb);
+    const offset = (pageNumber - 1) * pageSize;
     const docs = await (
       await db
-          .collection("blogs")
-          .where("author", "==", mb.name)
-          .orderBy("timestamp", "desc")
-          .get()
+        .collection("blogs")
+        .where("author", "==", mb.name)
+        .orderBy("timestamp", "desc")
+        .offset(offset)
+        .limit(20)
+        .get()
     ).docs;
-    const paginatedDocs = paginateArray(
-        docs,
-        parseInt(itemCount),
-        parseInt(page)
-    );
-    const blogs = paginatedDocs.map((doc) => {
+    // const paginatedDocs = paginateArray(docs, pageSize, pageNumber);
+    const blogs = docs.map((doc) => {
       const blog = doc.data() as Blog;
+
       if (previewLength == "true") return blog;
       return {
         ...blog,
@@ -88,24 +90,24 @@ app.get("/blogs", async (req, res) => {
 });
 
 exports.api = functions
-    .region("asia-northeast2")
-    .runWith({ timeoutSeconds: 540, memory: "2GB" })
-    .https.onRequest(app);
+  .region("asia-northeast2")
+  .runWith({ timeoutSeconds: 540, memory: "2GB" })
+  .https.onRequest(app);
 
 exports.scheduledFunction = functions
-    .region("asia-northeast2")
-    .runWith({ timeoutSeconds: 540, memory: "2GB" })
-    .pubsub.schedule("every 30 minutes")
-    .onRun(async () => {
-      console.log("Scheduled run");
+  .region("asia-northeast2")
+  .runWith({ timeoutSeconds: 540, memory: "2GB" })
+  .pubsub.schedule("every 30 minutes")
+  .onRun(async () => {
+    console.log("Scheduled run");
 
-      const mbDocs = await (await db.collection("members").get()).docs;
-      const mbList = mbDocs.map((doc) => doc.data() as MemberInfo);
-      for (const mb of mbList) {
-        await scrapeBlogs(mb);
-      }
-      return null;
-    });
+    const mbDocs = await (await db.collection("members").get()).docs;
+    const mbList = mbDocs.map((doc) => doc.data() as MemberInfo);
+    for (const mb of mbList) {
+      await scrapeBlogs(mb);
+    }
+    return null;
+  });
 
 // exports.scheduledFunction = functions
 //   .region("asia-northeast2")
