@@ -1,6 +1,6 @@
 import * as functions from "firebase-functions";
 import * as express from "express";
-import { MemberInfo, scrapeMemberList } from "./scraping/members";
+import { scrapeMemberList } from "./scraping/members";
 import { db } from "./utils/fbInit";
 import {
   scrapeBlogs,
@@ -10,6 +10,7 @@ import {
 import { Blog } from "./models/Blogs";
 
 import { PubSub } from "@google-cloud/pubsub";
+import { MemberInfo } from "./models/Members";
 
 const pubsub = new PubSub();
 const app = express();
@@ -43,7 +44,8 @@ app.post("/blogs", async (req, res) => {
     const mbDocs = await (await db.collection("members").get()).docs;
     const mbList = mbDocs.map((doc) => doc.data() as MemberInfo);
     for (const mb of mbList) {
-      await scrapeBlogs(mb);
+      if (mb.accessible) await scrapeBlogs(mb);
+      else console.log(`${mb.name} skipped`);
     }
     res.status(200).send("Success");
   } else {
@@ -136,6 +138,7 @@ exports.scheduledFunction = functions
     const mbList = mbDocs.map((doc) => doc.data() as MemberInfo);
     for (const mb of mbList) {
       if (mb.accessible) await scrapeNewBlogs(mb);
+      else console.log(`${mb.name} skipped`);
     }
     return null;
   });

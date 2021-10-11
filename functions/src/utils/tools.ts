@@ -22,11 +22,11 @@ export const findArrayDifference = (x: any[], y: any[]) => {
 };
 // eslint-disable-next-line
 export const paginateArray = (
-  // eslint-disable-next-line
+    // eslint-disable-next-line
   array: any[],
-  pageSize: number,
-  pageNumber: number
-  // eslint-disable-next-line
+    pageSize: number,
+    pageNumber: number
+    // eslint-disable-next-line
 ): any[] => {
   return array.slice((pageNumber - 1) * pageSize, pageNumber * pageSize);
 };

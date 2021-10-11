@@ -3,13 +3,7 @@ import { api } from "../api/axios";
 import { db } from "../utils/fbInit";
 import * as getUuid from "uuid-by-string";
 import { findArrayDifference, isArrayEqual } from "../utils/tools";
-
-export type MemberInfo = {
-  name: string;
-  href: string;
-  id: string;
-  accessible: boolean;
-};
+import { MemberInfo } from "../models/Members";
 
 export const scrapeMemberList = async (): Promise<string> => {
   const res = await api.get("/");
@@ -30,8 +24,6 @@ export const scrapeMemberList = async (): Promise<string> => {
     };
     mbList.push(member);
   });
-  // TODO Find diff between new and old list -> set only new member
-  // TODO Find diff between old and new list -> set deleted member accessible to false
   const cache = await db.collection("members").get();
   const cachedMember = cache.docs.map((doc) => doc.data() as MemberInfo);
   if (isArrayEqual(mbList, cachedMember)) {
