@@ -12,7 +12,8 @@ export const sortByAlphabeticalOrder = (a: string, b: string): number => {
 
 // eslint-disable-next-line
 export const isArrayEqual = (x: any[], y: any[]): boolean =>
-  _(x).differenceWith(y, _.isEqual).isEmpty();
+  _(x).differenceWith(y, _.isEqual).isEmpty() &&
+  _(y).differenceWith(x, _.isEqual).isEmpty();
 
 // eslint-disable-next-line
 export const findArrayDifference = (x: any[], y: any[]) => {
@@ -21,11 +22,11 @@ export const findArrayDifference = (x: any[], y: any[]) => {
 };
 // eslint-disable-next-line
 export const paginateArray = (
-    // eslint-disable-next-line
+  // eslint-disable-next-line
   array: any[],
-    pageSize: number,
-    pageNumber: number
-    // eslint-disable-next-line
+  pageSize: number,
+  pageNumber: number
+  // eslint-disable-next-line
 ): any[] => {
   return array.slice((pageNumber - 1) * pageSize, pageNumber * pageSize);
 };

@@ -135,7 +135,7 @@ exports.scheduledFunction = functions
     const mbDocs = await (await db.collection("members").get()).docs;
     const mbList = mbDocs.map((doc) => doc.data() as MemberInfo);
     for (const mb of mbList) {
-      await scrapeNewBlogs(mb);
+      if (mb.accessible) await scrapeNewBlogs(mb);
     }
     return null;
   });

@@ -2,7 +2,7 @@ import * as cheerio from "cheerio";
 import { api } from "../api/axios";
 import { db } from "../utils/fbInit";
 import * as getUuid from "uuid-by-string";
-import { isArrayEqual } from "../utils/tools";
+import { findArrayDifference, isArrayEqual } from "../utils/tools";
 
 export type MemberInfo = {
   name: string;
@@ -30,14 +30,24 @@ export const scrapeMemberList = async (): Promise<string> => {
     };
     mbList.push(member);
   });
-
+  // TODO Find diff between new and old list -> set only new member
+  // TODO Find diff between old and new list -> set deleted member accessible to false
   const cache = await db.collection("members").get();
   const cachedMember = cache.docs.map((doc) => doc.data() as MemberInfo);
   if (isArrayEqual(mbList, cachedMember)) {
+    console.log(mbList.length, cachedMember.length);
     return "Not refreshed";
   } else {
-    mbList.forEach(async (mb) => {
+    const newMember = findArrayDifference(mbList, cachedMember);
+    const deletedMember = findArrayDifference(cachedMember, mbList);
+    newMember.forEach(async (mb) => {
       await db.collection("members").doc(mb.id).set(mb);
+    });
+    deletedMember.forEach(async (mb) => {
+      await db
+        .collection("members")
+        .doc(mb.id)
+        .set({ ...mb, accessible: false });
     });
     return "Refreshed";
   }
