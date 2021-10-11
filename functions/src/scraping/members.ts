@@ -8,6 +8,7 @@ export type MemberInfo = {
   name: string;
   href: string;
   id: string;
+  accessible: boolean;
 };
 
 export const scrapeMemberList = async (): Promise<string> => {
@@ -25,6 +26,7 @@ export const scrapeMemberList = async (): Promise<string> => {
       name,
       href,
       id: getUuid(`${name}-${href}`),
+      accessible: true,
     };
     mbList.push(member);
   });

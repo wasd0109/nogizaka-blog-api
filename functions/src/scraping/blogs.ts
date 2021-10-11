@@ -9,7 +9,7 @@ import * as getUuid from "uuid-by-string";
 import { findArrayDifference } from "../utils/tools";
 
 export const scrapeMemberBlogs = async (
-    href: string
+  href: string
 ): Promise<FirebaseFirestore.WriteResult | null> => {
   const mbList: MemberInfo[] = await (
     await db.collection("members").get()
@@ -22,9 +22,52 @@ export const scrapeMemberBlogs = async (
 };
 
 export const scrapeBlogs = async (
-    mb: MemberInfo
+  mb: MemberInfo
 ): Promise<FirebaseFirestore.WriteResult | null> => {
   const monthList = await getMonthUrl(mb);
+  const blogUrls = await (await getAllBlogUrl(monthList)).flat();
+  const urlRef = await db.collection("urls").doc(mb.id);
+  const urlDoc = await urlRef.get();
+  const dbUrls = urlDoc.data()?.value || [];
+  const diff = findArrayDifference(blogUrls, dbUrls) as string[];
+  // const diff = findArrayDifference(blogs, dbBlogs);
+  const diffLength = diff.length;
+  if (diffLength) {
+    let blogs;
+    if (diffLength > 300) {
+      const half = Math.ceil(diffLength / 2);
+      const firstHalf = diff.slice(0, half);
+      const secondHalf = diff.slice(-half);
+      const firstHalfBlog = await getAllBlogs(firstHalf);
+      const secondHalfBlog = await getAllBlogs(secondHalf);
+
+      blogs = [...firstHalfBlog, ...secondHalfBlog];
+    } else blogs = await getAllBlogs(diff);
+    // const dbBlogsRef = await db
+    //   .collection("blogs")
+    //   .where("author", "==", mb.name)
+    //   .get();
+    // const dbBlogs = dbBlogsRef.docs.map((doc) => {
+    //   const blog = doc.data();
+    //   return { ...blog, timestamp: blog.timestamp.toDate() } as Blog;
+    // });
+    try {
+      await saveBlogs(blogs);
+      const saveUrlPromise = urlRef.set({ value: blogUrls });
+      return saveUrlPromise;
+    } catch (err) {
+      console.log(err);
+      return null;
+    }
+  } else {
+    return null;
+  }
+};
+
+export const scrapeNewBlogs = async (
+  mb: MemberInfo
+): Promise<FirebaseFirestore.WriteResult | null> => {
+  const monthList = await (await getMonthUrl(mb)).slice(0, 2);
   const blogUrls = await (await getAllBlogUrl(monthList)).flat();
   const urlRef = await db.collection("urls").doc(mb.id);
   const urlDoc = await urlRef.get();
@@ -93,7 +136,7 @@ const getMonthUrl = async (mb: MemberInfo) => {
     return monthList;
   } catch (err) {
     console.log(
-        `Error at getting month URL,member: ${mb.name}, message: ${err}`
+      `Error at getting month URL,member: ${mb.name}, message: ${err}`
     );
     return [];
   }
@@ -161,3 +204,19 @@ const getAllBlogs = (urls: string[]) => {
   urls.forEach((url) => promiseArray.push(scrapeBlogFromUrl(url)));
   return Promise.all(promiseArray);
 };
+
+// const haveNewBlog = async (mb: MemberInfo): boolean => {
+//   try {
+//     const res = await api.get(mb.href);
+//     const $ = cheerio.load(res.data);
+//     const dbLatestBlogTitles = await (
+//       await db.collection("cache").doc(mb.id).get()
+//     ).data;
+//     var latestBlogTitles = "";
+//     $(".entrytitle").each((i, el) => {
+//       if (i === 0) latestBlogTitles = $(el).text();
+//     });
+//     console.log(latestBlogTitles);
+//     return latestBlogTitles === dbLatestBlogTitles.value;
+//   } catch (err) {}
+// };

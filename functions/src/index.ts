@@ -2,7 +2,11 @@ import * as functions from "firebase-functions";
 import * as express from "express";
 import { MemberInfo, scrapeMemberList } from "./scraping/members";
 import { db } from "./utils/fbInit";
-import { scrapeBlogs, scrapeMemberBlogs } from "./scraping/blogs";
+import {
+  scrapeBlogs,
+  scrapeMemberBlogs,
+  scrapeNewBlogs,
+} from "./scraping/blogs";
 import { Blog } from "./models/Blogs";
 
 import { PubSub } from "@google-cloud/pubsub";
@@ -131,7 +135,7 @@ exports.scheduledFunction = functions
     const mbDocs = await (await db.collection("members").get()).docs;
     const mbList = mbDocs.map((doc) => doc.data() as MemberInfo);
     for (const mb of mbList) {
-      await scrapeBlogs(mb);
+      await scrapeNewBlogs(mb);
     }
     return null;
   });
