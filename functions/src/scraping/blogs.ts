@@ -9,7 +9,7 @@ import * as getUuid from "uuid-by-string";
 import { findArrayDifference } from "../utils/tools";
 
 export const scrapeMemberBlogs = async (
-  href: string
+    href: string
 ): Promise<FirebaseFirestore.WriteResult | null> => {
   const mbList: MemberInfo[] = await (
     await db.collection("members").get()
@@ -22,7 +22,7 @@ export const scrapeMemberBlogs = async (
 };
 
 export const scrapeBlogs = async (
-  mb: MemberInfo
+    mb: MemberInfo
 ): Promise<FirebaseFirestore.WriteResult | null> => {
   const monthList = await getMonthUrl(mb);
   const blogUrls = await (await getAllBlogUrl(monthList)).flat();
@@ -65,7 +65,7 @@ export const scrapeBlogs = async (
 };
 
 export const scrapeNewBlogs = async (
-  mb: MemberInfo
+    mb: MemberInfo
 ): Promise<FirebaseFirestore.WriteResult | null> => {
   const monthList = await (await getMonthUrl(mb)).slice(0, 2);
   const blogUrls = await (await getAllBlogUrl(monthList)).flat();
@@ -136,7 +136,7 @@ const getMonthUrl = async (mb: MemberInfo) => {
     return monthList;
   } catch (err) {
     console.log(
-      `Error at getting month URL,member: ${mb.name}, message: ${err}`
+        `Error at getting month URL,member: ${mb.name}, message: ${err}`
     );
     return [];
   }
@@ -175,6 +175,7 @@ const scrapeBlogFromUrl = async (url: string) => {
       content,
       timestamp,
       id: getUuid(`${author}-${timestamp}`),
+      href: url,
     };
 
     return blog;

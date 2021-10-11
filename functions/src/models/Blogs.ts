@@ -4,4 +4,5 @@ export type Blog = {
   content: string;
   timestamp: Date;
   id: string;
+  href: string;
 };
