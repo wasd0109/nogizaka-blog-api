@@ -73,12 +73,12 @@ app.get("/blogs", async (req, res) => {
 
     const docs = await (
       await db
-        .collection("blogs")
-        .where("author", "==", mb.name)
-        .orderBy("timestamp", "desc")
-        .offset(offset)
-        .limit(20)
-        .get()
+          .collection("blogs")
+          .where("author", "==", mb.name)
+          .orderBy("timestamp", "desc")
+          .offset(offset)
+          .limit(20)
+          .get()
     ).docs;
     // const paginatedDocs = paginateArray(docs, pageSize, pageNumber);
     const blogs = docs.map((doc) => {
@@ -97,12 +97,12 @@ app.get("/blogs", async (req, res) => {
   } else {
     const docs = await (
       await db
-        .collection("blogs")
+          .collection("blogs")
 
-        .orderBy("timestamp", "desc")
-        .offset(offset)
-        .limit(20)
-        .get()
+          .orderBy("timestamp", "desc")
+          .offset(offset)
+          .limit(20)
+          .get()
     ).docs;
 
     const blogs = docs.map((doc) => {
@@ -123,25 +123,25 @@ app.get("/blogs", async (req, res) => {
 });
 
 exports.api = functions
-  .region("asia-northeast2")
-  .runWith({ timeoutSeconds: 540, memory: "2GB" })
-  .https.onRequest(app);
+    .region("asia-northeast2")
+    .runWith({ timeoutSeconds: 540, memory: "2GB" })
+    .https.onRequest(app);
 
 exports.scheduledFunction = functions
-  .region("asia-northeast2")
-  .runWith({ timeoutSeconds: 540, memory: "2GB" })
-  .pubsub.schedule("every 30 minutes")
-  .onRun(async () => {
-    console.log("Scheduled run");
+    .region("asia-northeast2")
+    .runWith({ timeoutSeconds: 540, memory: "2GB" })
+    .pubsub.schedule("every 30 minutes")
+    .onRun(async () => {
+      console.log("Scheduled run");
 
-    const mbDocs = await (await db.collection("members").get()).docs;
-    const mbList = mbDocs.map((doc) => doc.data() as MemberInfo);
-    for (const mb of mbList) {
-      if (mb.accessible) await scrapeNewBlogs(mb);
-      else console.log(`${mb.name} skipped`);
-    }
-    return null;
-  });
+      const mbDocs = await (await db.collection("members").get()).docs;
+      const mbList = mbDocs.map((doc) => doc.data() as MemberInfo);
+      for (const mb of mbList) {
+        if (mb.accessible) await scrapeNewBlogs(mb);
+        else console.log(`${mb.name} skipped`);
+      }
+      return null;
+    });
 
 // exports.scheduledFunction = functions
 //   .region("asia-northeast2")
@@ -153,20 +153,20 @@ exports.scheduledFunction = functions
 //   });
 
 exports.pubsubWriter = functions
-  .region("asia-northeast2")
-  .https.onRequest(async (req, res) => {
-    console.log("Pubsub Emulator:", process.env.PUBSUB_EMULATOR_HOST);
-    const testTopic =
+    .region("asia-northeast2")
+    .https.onRequest(async (req, res) => {
+      console.log("Pubsub Emulator:", process.env.PUBSUB_EMULATOR_HOST);
+      const testTopic =
       "projects/nogizaka-api-98c03/topics/firebase-schedule-scheduledFunction";
-    const msg = await pubsub.topic(testTopic).publishJSON(
-      {
-        foo: "bar",
-        date: new Date(),
-      },
-      { attr1: "value" }
-    );
+      const msg = await pubsub.topic(testTopic).publishJSON(
+          {
+            foo: "bar",
+            date: new Date(),
+          },
+          { attr1: "value" }
+      );
 
-    res.json({
-      published: msg,
+      res.json({
+        published: msg,
+      });
     });
-  });

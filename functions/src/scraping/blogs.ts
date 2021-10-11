@@ -167,7 +167,7 @@ const scrapeBlogFromUrl = async (url: string) => {
     const content = NodeHtmlMarkdown.translate($(".entrybody").html() || "");
     const metadata = $(".entrybottom").text();
     // TODO Change code to reflect timestamp originated from JST
-    const timestamp = new Date(metadata.split("｜")[0]);
+    const timestamp = new Date(`${metadata.split("｜")[0]} GMT+09:00`);
 
     const blog: Blog = {
       author,

@@ -37,9 +37,9 @@ export const scrapeMemberList = async (): Promise<string> => {
     });
     deletedMember.forEach(async (mb) => {
       await db
-        .collection("members")
-        .doc(mb.id)
-        .set({ ...mb, accessible: false });
+          .collection("members")
+          .doc(mb.id)
+          .set({ ...mb, accessible: false });
     });
     return "Refreshed";
   }
