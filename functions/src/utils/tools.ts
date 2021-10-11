@@ -30,6 +30,6 @@ export const paginateArray = (
   return array.slice((pageNumber - 1) * pageSize, pageNumber * pageSize);
 };
 
-export const sleep = (milliseconds: number) => {
-  return new Promise((resolve) => setTimeout(resolve, milliseconds));
-};
+// export const sleep = (milliseconds: number) => {
+//   return new Promise((resolve) => setTimeout(resolve, milliseconds));
+// };

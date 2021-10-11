@@ -81,26 +81,38 @@ const saveBlogs = async (blogs: (Blog | null)[]) => {
 };
 
 const getMonthUrl = async (mb: MemberInfo) => {
-  const res = await api.get(`/${mb.href}`);
-  const $ = cheerio.load(res.data);
-  const months = $("option");
-  const monthList: string[] = [];
-  months.each((i, el) => {
-    const url = $(el).attr("value");
-    if (url) monthList.push(url);
-  });
-  return monthList;
+  try {
+    const res = await api.get(`/${mb.href}`);
+    const $ = cheerio.load(res.data);
+    const months = $("option");
+    const monthList: string[] = [];
+    months.each((i, el) => {
+      const url = $(el).attr("value");
+      if (url) monthList.push(url);
+    });
+    return monthList;
+  } catch (err) {
+    console.log(
+        `Error at getting month URL,member: ${mb.name}, message: ${err}`
+    );
+    return [];
+  }
 };
 
 const getBlogUrl = async (monthUrl: string) => {
-  const res = await axios.get(monthUrl);
-  const $ = cheerio.load(res.data);
-  const result: string[] = [];
-  $("#daytable a").each((i, el) => {
-    const url = $(el).attr("href");
-    if (url) result.push(url);
-  });
-  return result;
+  try {
+    const res = await axios.get(monthUrl);
+    const $ = cheerio.load(res.data);
+    const result: string[] = [];
+    $("#daytable a").each((i, el) => {
+      const url = $(el).attr("href");
+      if (url) result.push(url);
+    });
+    return result;
+  } catch (err) {
+    console.log(`Error at getting blog URL,url: ${monthUrl}, message: ${err}`);
+    return [];
+  }
 };
 
 const scrapeBlogFromUrl = async (url: string) => {
@@ -124,6 +136,7 @@ const scrapeBlogFromUrl = async (url: string) => {
 
     return blog;
   } catch (err) {
+    console.log(`Error at scraping blog,url: ${url} message: ${err}`);
     return null;
   }
 };

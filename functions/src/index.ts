@@ -3,9 +3,11 @@ import * as express from "express";
 import { MemberInfo, scrapeMemberList } from "./scraping/members";
 import { db } from "./utils/fbInit";
 import { scrapeBlogs, scrapeMemberBlogs } from "./scraping/blogs";
-import { paginateArray, sleep } from "./utils/tools";
 import { Blog } from "./models/Blogs";
 
+import { PubSub } from "@google-cloud/pubsub";
+
+const pubsub = new PubSub();
 const app = express();
 
 // Start writing Firebase Functions
@@ -57,12 +59,12 @@ app.get("/blogs", async (req, res) => {
   const previewLength = (req.query["previewLength"] as string) || "300";
   const pageNumber = parseInt(page);
   const pageSize = parseInt(itemCount);
-
+  const offset = (pageNumber - 1) * pageSize;
   if (href) {
     const mb = (await (
       await db.collection("members").where("href", "==", href).get()
     ).docs[0].data()) as MemberInfo;
-    const offset = (pageNumber - 1) * pageSize;
+
     const docs = await (
       await db
         .collection("blogs")
@@ -82,6 +84,31 @@ app.get("/blogs", async (req, res) => {
         content: blog.content.substring(0, parseInt(previewLength)),
       };
     });
+    res.send({
+      blogs,
+      length: blogs.length,
+    });
+  } else {
+    const docs = await (
+      await db
+        .collection("blogs")
+
+        .orderBy("timestamp", "desc")
+        .offset(offset)
+        .limit(20)
+        .get()
+    ).docs;
+
+    const blogs = docs.map((doc) => {
+      const blog = doc.data() as Blog;
+
+      if (previewLength == "true") return blog;
+      return {
+        ...blog,
+        content: blog.content.substring(0, parseInt(previewLength)),
+      };
+    });
+
     res.send({
       blogs,
       length: blogs.length,
@@ -117,3 +144,22 @@ exports.scheduledFunction = functions
 //     console.log("Scheduled run");
 //     return null;
 //   });
+
+exports.pubsubWriter = functions
+  .region("asia-northeast2")
+  .https.onRequest(async (req, res) => {
+    console.log("Pubsub Emulator:", process.env.PUBSUB_EMULATOR_HOST);
+    const testTopic =
+      "projects/nogizaka-api-98c03/topics/firebase-schedule-scheduledFunction";
+    const msg = await pubsub.topic(testTopic).publishJSON(
+      {
+        foo: "bar",
+        date: new Date(),
+      },
+      { attr1: "value" }
+    );
+
+    res.json({
+      published: msg,
+    });
+  });
